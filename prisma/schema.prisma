@@ -23,6 +23,19 @@ model User {
   hostedSessions RestaurantSession[] @relation("HostedSessions")
   participants   Participant[]
   votes          Vote[]
+  restaurants    Restaurant[]
+}
+
+model Restaurant {
+  id          String   @id @default(cuid())
+  name        String
+  area        String
+  cuisine     String
+  identityKey String   @unique
+  searchText  String
+  createdById String?
+  createdBy   User?    @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
 }
 
 model Account {

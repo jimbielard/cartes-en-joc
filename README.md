@@ -112,6 +112,12 @@ La portada inclou una cerca de restaurants i les 12 valoracions més recents de
 tota la comunitat. El perfil permet editar nom, àlies i biografia, i consultar
 l'historial personal paginat. El correu continua vinculat a Google.
 
+Si el restaurant no apareix al cercador, es pot crear amb nom, adreça i tipus
+de cuina. Queda disponible per a tots els usuaris, també quan Google no respon.
+Els duplicats amb el mateix nom i adreça reutilitzen el restaurant existent.
+Des de l'historial personal es poden eliminar les valoracions pròpies amb
+confirmació; això actualitza els resultats sense eliminar el restaurant compartit.
+
 Des del cercador es pot crear una sessió i votar el restaurant seleccionat.
 La nota es calcula al servidor com la mitjana de les categories puntuades:
 el zero compta, les categories buides o ocultes no. Cal puntuar-ne almenys una.

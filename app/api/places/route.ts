@@ -1,4 +1,6 @@
 import { auth } from "@/auth";
+import { prisma } from "@/lib/prisma";
+import { normalizeRestaurantText, toPlaceRestaurant } from "@/lib/restaurants";
 
 type GooglePlace = { id?: string; displayName?: { text?: string }; formattedAddress?: string; types?: string[]; rating?: number; priceLevel?: string };
 
@@ -33,19 +35,24 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "No auth" }, { status: 401 });
   }
   const { searchParams } = new URL(request.url);
-  const query = (searchParams.get("query") ?? "restaurants").trim();
+  const query = (searchParams.get("query") ?? "restaurants").trim().slice(0, 200);
 
   if (!query) {
     return NextResponse.json({ restaurants: [] });
   }
 
+  const localRestaurants = (await prisma.restaurant.findMany({
+    where: { AND: normalizeRestaurantText(query).split(" ").filter(Boolean).map(word => ({ searchText: { contains: word } })) },
+    orderBy: { createdAt: "desc" }, take: 20,
+  })).map(toPlaceRestaurant);
+
   if (!GOOGLE_PLACES_API_KEY) {
     return NextResponse.json(
       {
-        error: "Manca GOOGLE_PLACES_API_KEY o GOOGLE_MAPS_API_KEY a les variables d'entorn.",
-        restaurants: [],
+        warning: "La cerca de Google no està disponible. Pots consultar els restaurants de la comunitat o crear-ne un.",
+        restaurants: localRestaurants,
       },
-      { status: 500 },
+      { status: 200 },
     );
   }
 
@@ -55,6 +62,7 @@ export async function GET(request: Request) {
     const response = await fetch(url, {
       method: "POST",
       cache: "no-store",
+      signal: AbortSignal.timeout(8000),
       headers: {
         "Content-Type": "application/json",
         "X-Goog-Api-Key": GOOGLE_PLACES_API_KEY,
@@ -73,13 +81,10 @@ export async function GET(request: Request) {
     if (!response.ok) {
       return NextResponse.json(
         {
-          error:
-            payload?.error?.message ??
-            payload?.message ??
-            "Google Places request failed",
-          restaurants: [],
+          warning: "No s’ha pogut consultar Google. Pots consultar els restaurants de la comunitat o crear-ne un.",
+          restaurants: localRestaurants,
         },
-        { status: 400 },
+        { status: 200 },
       );
     }
 
@@ -127,14 +132,14 @@ export async function GET(request: Request) {
       };
     });
 
-    return NextResponse.json({ restaurants });
-  } catch (error) {
+    return NextResponse.json({ restaurants: [...localRestaurants, ...restaurants] });
+  } catch {
     return NextResponse.json(
       {
-        error: error instanceof Error ? error.message : "Google Places request failed",
-        restaurants: [],
+        warning: "No s’ha pogut consultar Google. Pots consultar els restaurants de la comunitat o crear-ne un.",
+        restaurants: localRestaurants,
       },
-      { status: 500 },
+      { status: 200 },
     );
   }
 }

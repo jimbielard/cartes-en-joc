@@ -5,17 +5,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { DEFAULT_VOTE_CATEGORIES, averageCategoryScores, buildCategoryScores, type VoteCategory } from "@/lib/vote-categories";
-
-type PlaceRestaurant = {
-  id: string;
-  name: string;
-  area: string;
-  rating: number;
-  type: string;
-  price: string;
-  description: string;
-  keywords: string[];
-};
+import type { PlaceRestaurant } from "@/lib/restaurants";
+import { CreateRestaurantForm } from "@/components/create-restaurant-form";
 
 const fallbackRestaurants: PlaceRestaurant[] = [];
 
@@ -43,6 +34,8 @@ export function RestaurantPicker({ code, initialQuery = "" }: { code?: string; i
   const [loadingPlaces, setLoadingPlaces] = useState(false);
   const [resultQuery, setResultQuery] = useState("");
   const [placesError, setPlacesError] = useState("");
+  const [creatingRestaurant, setCreatingRestaurant] = useState(false);
+  const [createdRestaurant, setCreatedRestaurant] = useState<PlaceRestaurant | null>(null);
 
   useEffect(() => {
     const queryValue = query.trim();
@@ -68,7 +61,7 @@ export function RestaurantPicker({ code, initialQuery = "" }: { code?: string; i
 
         setRestaurants(Array.isArray(payload?.restaurants) ? payload.restaurants : []);
         setResultQuery(queryValue);
-        setPlacesError("");
+        setPlacesError(payload.warning ?? "");
       } catch (err) {
         if (controller.signal.aborted) return;
         setRestaurants([]);
@@ -111,7 +104,8 @@ export function RestaurantPicker({ code, initialQuery = "" }: { code?: string; i
     loadSession();
   }, [code]);
 
-  const filteredRestaurants = query.trim() && resultQuery === query.trim() ? restaurants : fallbackRestaurants;
+  const searchResults = query.trim() && resultQuery === query.trim() ? restaurants : fallbackRestaurants;
+  const filteredRestaurants = createdRestaurant ? [createdRestaurant, ...searchResults.filter(item => item.id !== createdRestaurant.id)] : searchResults;
 
   const selectedRestaurant =
     filteredRestaurants.find((restaurant) => restaurant.id === selectedId) ??
@@ -203,11 +197,24 @@ export function RestaurantPicker({ code, initialQuery = "" }: { code?: string; i
           </span>
           <input
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={(event) => { setQuery(event.target.value); setCreatedRestaurant(null); }}
             className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-orange-400 focus:bg-white"
             placeholder="Pasta, barceloneta, mediterrània..."
           />
         </label>
+
+        <div className="mt-5 rounded-2xl bg-orange-50 p-4">
+          <p className="text-sm text-orange-900">No trobes el restaurant?</p>
+          {!creatingRestaurant ? <button type="button" onClick={() => setCreatingRestaurant(true)} className="mt-2 rounded-xl border border-orange-300 bg-white px-4 py-2.5 text-sm font-semibold text-orange-800">Crear restaurant</button> :
+            <CreateRestaurantForm initialName={query} onCancel={() => setCreatingRestaurant(false)} onCreated={restaurant => {
+              setCreatedRestaurant(restaurant);
+              setSelectedId(restaurant.id);
+              setCreatingRestaurant(false);
+              setCategoryScores({});
+              setError("");
+              setSuccess("Restaurant desat i seleccionat. Ja el pots puntuar.");
+            }} />}
+        </div>
 
         <div className="mt-5 space-y-3">
           {placesError && query.trim() && <p role="alert" className="text-sm text-red-700">{placesError}</p>}
@@ -242,7 +249,7 @@ export function RestaurantPicker({ code, initialQuery = "" }: { code?: string; i
                   </div>
 
                   <div className="rounded-full bg-white px-2.5 py-1 text-sm font-semibold text-amber-600 shadow-sm">
-                    ★ {restaurant.rating.toFixed(1)}
+                    {restaurant.rating === null ? "Comunitat" : `★ ${restaurant.rating.toFixed(1)}`}
                   </div>
                 </div>
 
@@ -282,12 +289,12 @@ export function RestaurantPicker({ code, initialQuery = "" }: { code?: string; i
                   {selectedRestaurant.type}
                 </dd>
               </div>
-              <div>
+              {selectedRestaurant.rating !== null && <div>
                 <dt className="font-medium text-slate-500">Valoració de Google</dt>
                 <dd className="mt-1 text-base font-semibold text-slate-800">
                   {selectedRestaurant.rating.toFixed(1)} / 10
                 </dd>
-              </div>
+              </div>}
             </dl>
 
             <div className="mt-5 rounded-2xl border border-orange-200 bg-white p-3">

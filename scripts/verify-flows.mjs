@@ -7,6 +7,7 @@ nextEnv.loadEnvConfig(process.cwd());
 const prisma = new PrismaClient();
 const base = 'http://localhost:3000';
 const ids = [];
+const restaurantIds = [];
 async function fixture() {
   const tag = randomUUID();
   const user = await prisma.user.create({ data: { name: 'Verification', email: `verify-${tag}@example.invalid` } });
@@ -49,9 +50,30 @@ async function call(path, cookie, method = 'GET', body) {
   const search = await (await call('/restaurants?q=Barcelona', a.cookie)).text();
   assert.ok(search.includes('Barcelona'));
   assert.ok(search.includes('Crear sessió'));
+  assert.equal((await call('/api/restaurants', null, 'POST', {})).status, 401);
+  assert.equal((await call('/api/restaurants', a.cookie, 'POST', { name: '', area: '', cuisine: '' })).status, 400);
+  const manualName = `Manual ${randomUUID()}`;
+  const manualResponse = await call('/api/restaurants', a.cookie, 'POST', { name: manualName, area: 'Girona, Major 12', cuisine: 'Catalana' });
+  assert.equal(manualResponse.status, 200);
+  const manual = (await manualResponse.json()).restaurant;
+  restaurantIds.push(manual.id.replace(/^local-/, ''));
+  assert.equal(manual.rating, null);
+  const duplicate = await (await call('/api/restaurants', b.cookie, 'POST', { name: ` ${manualName.toUpperCase()} `, area: 'Girona, Major 12', cuisine: 'Catalana' })).json();
+  assert.equal(duplicate.restaurant.id, manual.id);
+  const found = await (await call(`/api/places?query=${encodeURIComponent(manualName)}`, b.cookie)).json();
+  assert.ok(found.restaurants.some(item => item.id === manual.id));
+  const voteId = results.votes[0].id;
+  assert.equal((await call(`/api/votes/${voteId}`, null, 'DELETE')).status, 401);
+  assert.equal((await call(`/api/votes/${voteId}`, b.cookie, 'DELETE')).status, 404);
+  assert.ok(await prisma.vote.findUnique({ where: { id: voteId } }));
+  assert.equal((await call(`/api/votes/${voteId}`, a.cookie, 'DELETE')).status, 200);
+  assert.equal(await prisma.vote.findUnique({ where: { id: voteId } }), null);
+  assert.equal((await (await call(`/api/sessions/${code}`, a.cookie)).json()).votes.length, 0);
+  console.log('PASS: manual restaurant creation, duplicate prevention, shared search and owner-only vote deletion.');
   console.log('PASS: profile validation, ownership, persistence, community feed, personal history, search and category averages.');
 })().catch(err => { console.error(err.message); process.exitCode = 1; }).finally(async () => {
   // Only delete the disposable accounts created by this exact test run.
+  for (const id of restaurantIds) await prisma.restaurant.delete({ where: { id } });
   for (const id of ids) await prisma.user.delete({ where: { id } });
   await prisma.$disconnect();
 });
