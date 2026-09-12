@@ -1,0 +1,103 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  googleId      String?   @unique
+  email         String    @unique
+  emailVerified DateTime?
+  name          String?
+  alias         String?
+  image         String?
+  bio           String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  accounts      Account[]
+  sessions      Session[]
+  hostedSessions RestaurantSession[] @relation("HostedSessions")
+  participants   Participant[]
+  votes          Vote[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model RestaurantSession {
+  id        String       @id @default(cuid())
+  code      String       @unique
+  name      String
+  location  String?
+  categories Json?
+  hostId    String
+  host      User         @relation("HostedSessions", fields: [hostId], references: [id], onDelete: Cascade)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  participants Participant[]
+  votes     Vote[]
+}
+
+model Participant {
+  id        String            @id @default(cuid())
+  sessionId String
+  name      String
+  userId    String?
+  session   RestaurantSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  user      User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
+  createdAt DateTime          @default(now())
+
+  @@unique([sessionId, userId])
+}
+
+model Vote {
+  id              String            @id @default(cuid())
+  sessionId       String
+  userId          String
+  restaurantName  String
+  restaurantArea  String?
+  restaurantType  String?
+  rating          Float?
+  categoryScores  Json?
+  createdAt       DateTime          @default(now())
+  session         RestaurantSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
