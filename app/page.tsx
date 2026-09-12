@@ -1,3 +1,6 @@
+import Link from "next/link";
+import { prisma } from "@/lib/prisma";
+import { VoteHistory } from "@/components/vote-history";
 import { redirect } from "next/navigation";
 import { auth, signOut } from "@/auth";
 
@@ -7,6 +10,8 @@ export default async function HomePage() {
   if (!session?.user) {
     redirect("/login");
   }
+
+  const votes = await prisma.vote.findMany({ orderBy: [{ createdAt: "desc" }, { id: "desc" }], take: 12, select: { id: true, restaurantName: true, restaurantArea: true, restaurantType: true, rating: true, categoryScores: true, createdAt: true } });
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,_#fff7ed_0%,_#ffe4e6_35%,_#fffaf5_100%)] p-6 text-slate-800">
@@ -26,7 +31,7 @@ export default async function HomePage() {
             <div className="flex items-center gap-3">
               <span className="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1.5 text-sm font-semibold text-emerald-700">
                 <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
-                Estil C actiu
+                Connectat
               </span>
 
               <form
@@ -46,24 +51,12 @@ export default async function HomePage() {
           </div>
         </header>
 
-        <section className="mb-8 grid gap-5 md:grid-cols-3">
-          <div className="rounded-[28px] border-2 border-orange-200 bg-gradient-to-br from-orange-100 via-yellow-50 to-white p-5 shadow-[0_16px_40px_rgba(251,146,60,0.15)]">
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-orange-600">Status</p>
-            <p className="mt-3 text-3xl font-black text-slate-900">01</p>
-            <p className="mt-2 text-sm text-slate-600">Sessió activa i preparada per votar.</p>
-          </div>
-
-          <div className="rounded-[28px] border-2 border-pink-200 bg-gradient-to-br from-pink-50 to-white p-5 shadow-[0_16px_40px_rgba(236,72,153,0.12)]">
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-pink-600">Codi</p>
-            <p className="mt-3 text-2xl font-black text-slate-900">JDC-ABCD</p>
-            <p className="mt-2 text-sm text-slate-600">Comparteix el codi amb el grup.</p>
-          </div>
-
-          <div className="rounded-[28px] border-2 border-yellow-200 bg-gradient-to-br from-yellow-50 to-white p-5 shadow-[0_16px_40px_rgba(251,191,36,0.14)]">
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-amber-600">Pròxim pas</p>
-            <p className="mt-3 text-2xl font-black text-slate-900">Votar</p>
-            <p className="mt-2 text-sm text-slate-600">Escull el restaurant i revisa els resultats.</p>
-          </div>
+        <section className="mb-8 rounded-3xl border border-orange-100 bg-white p-6">
+          <h2 className="text-2xl font-bold text-slate-900">Quin restaurant vols descobrir?</h2>
+          <form action="/restaurants" className="mt-5 flex flex-col gap-3 sm:flex-row">
+            <label className="flex-1"><span className="sr-only">Cerca per nom, zona o tipus de cuina</span><input type="search" name="q" required maxLength={200} placeholder="Nom, zona o tipus de cuina..." className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 focus:border-orange-500 focus:outline-none" /></label>
+            <button className="rounded-xl bg-slate-900 px-6 py-3 font-semibold text-white">Cercar restaurant</button>
+          </form>
         </section>
 
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -84,7 +77,7 @@ export default async function HomePage() {
             },
             {
               title: "Entrar amb codi",
-              value: "JDC-5824",
+              value: "Uneix-te al grup",
               href: "/join",
               badge: "Participació",
               className: "bg-gradient-to-br from-emerald-50 to-lime-50 border-emerald-200",
@@ -92,12 +85,12 @@ export default async function HomePage() {
             {
               title: "El meu perfil",
               value: "Dades personals",
-              href: "#",
+              href: "/profile",
               badge: "Compte",
               className: "bg-gradient-to-br from-slate-100 to-white border-slate-200",
             },
           ].map((item) => (
-            <a
+            <Link
               key={item.title}
               href={item.href}
               className={`rounded-[28px] border-2 p-5 shadow-[0_16px_32px_rgba(15,23,42,0.06)] transition hover:-translate-y-1 hover:shadow-[0_20px_40px_rgba(236,72,153,0.12)] ${item.className}`}
@@ -107,9 +100,10 @@ export default async function HomePage() {
               </div>
               <h2 className="text-lg font-black text-slate-900">{item.title}</h2>
               <p className="mt-1 text-sm text-slate-600">{item.value}</p>
-            </a>
+            </Link>
           ))}
         </section>
+        <VoteHistory votes={votes} />
       </div>
     </main>
   );

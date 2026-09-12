@@ -4,6 +4,12 @@ export type VoteCategory = {
   visible: boolean;
 };
 
+export function averageCategoryScores(input: unknown): number | null {
+  if (!input || typeof input !== "object" || Array.isArray(input)) return null;
+  const scores = Object.values(input).filter((value): value is number => typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= 10);
+  return scores.length ? scores.reduce((sum, value) => sum + value, 0) / scores.length : null;
+}
+
 export const DEFAULT_VOTE_CATEGORIES: VoteCategory[] = [
   { key: "qualitat", label: "Qualitat", visible: true },
   { key: "servei", label: "Servei", visible: true },

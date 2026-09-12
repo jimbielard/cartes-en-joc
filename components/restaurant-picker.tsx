@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 
 import { useEffect, useState } from "react";
 
-import { DEFAULT_VOTE_CATEGORIES, type VoteCategory } from "@/lib/vote-categories";
+import { DEFAULT_VOTE_CATEGORIES, averageCategoryScores, buildCategoryScores, type VoteCategory } from "@/lib/vote-categories";
 
 type PlaceRestaurant = {
   id: string;
@@ -17,46 +17,7 @@ type PlaceRestaurant = {
   keywords: string[];
 };
 
-const fallbackRestaurants: PlaceRestaurant[] = [
-  {
-    id: "fallback-1",
-    name: "La Cova del Taverner",
-    area: "Eixample, Barcelona",
-    rating: 8.7,
-    type: "Catalana",
-    price: "€€",
-    description: "Menjars casolans i ambient molt acollidor.",
-    keywords: ["cova", "taverner", "catalana", "eixample"],
-  },
-  {
-    id: "fallback-2",
-    name: "Bistrot del Port",
-    area: "Barceloneta, Barcelona",
-    rating: 8.3,
-    type: "Marisc",
-    price: "€€€",
-    description: "Vistes al mar i plats de temporada.",
-    keywords: ["bistrot", "port", "marisc", "barceloneta"],
-  },
-  {
-    id: "fallback-3",
-    name: "Terrassa Verde",
-    area: "Gràcia, Barcelona",
-    rating: 8.9,
-    type: "Vegetarià",
-    price: "€€",
-    description: "Opcions fresques i molt ben presentades.",
-    keywords: ["terrassa", "verde", "vegetaria", "gracia"],
-  },
-];
-
-function normalizeText(value: string) {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .trim();
-}
+const fallbackRestaurants: PlaceRestaurant[] = [];
 
 function clampScore(value: number | string) {
   const numeric = Number(value);
@@ -68,18 +29,20 @@ function clampScore(value: number | string) {
   return Math.min(10, Math.max(0, numeric));
 }
 
-export function RestaurantPicker({ code }: { code?: string }) {
+export function RestaurantPicker({ code, initialQuery = "" }: { code?: string; initialQuery?: string }) {
   const router = useRouter();
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(initialQuery);
+  const [activeCode, setActiveCode] = useState(code);
   const [selectedId, setSelectedId] = useState<string | null>(fallbackRestaurants[1]?.id ?? null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [categories, setCategories] = useState<VoteCategory[]>(DEFAULT_VOTE_CATEGORIES);
-  const [overallRating, setOverallRating] = useState(8.5);
-  const [categoryScores, setCategoryScores] = useState<Record<string, number>>({});
+  const [categoryScores, setCategoryScores] = useState<Record<string, number | string>>({});
   const [restaurants, setRestaurants] = useState<PlaceRestaurant[]>(fallbackRestaurants);
   const [loadingPlaces, setLoadingPlaces] = useState(false);
+  const [resultQuery, setResultQuery] = useState("");
+  const [placesError, setPlacesError] = useState("");
 
   useEffect(() => {
     const queryValue = query.trim();
@@ -103,28 +66,14 @@ export function RestaurantPicker({ code }: { code?: string }) {
           throw new Error(payload?.error ?? "No s’han pogut carregar restaurants");
         }
 
-        const nextRestaurants = Array.isArray(payload?.restaurants) && payload.restaurants.length
-          ? payload.restaurants
-          : fallbackRestaurants.filter((restaurant) => {
-              const haystack = [restaurant.name, restaurant.area, restaurant.type, ...restaurant.keywords]
-                .join(" ")
-                .toLowerCase();
-
-              return haystack.includes(normalizeText(queryValue));
-            });
-
-        setRestaurants(nextRestaurants);
-      } catch {
+        setRestaurants(Array.isArray(payload?.restaurants) ? payload.restaurants : []);
+        setResultQuery(queryValue);
+        setPlacesError("");
+      } catch (err) {
         if (controller.signal.aborted) return;
-        setRestaurants(
-          fallbackRestaurants.filter((restaurant) => {
-            const haystack = [restaurant.name, restaurant.area, restaurant.type, ...restaurant.keywords]
-              .join(" ")
-              .toLowerCase();
-
-            return haystack.includes(normalizeText(queryValue));
-          }),
-        );
+        setRestaurants([]);
+        setResultQuery(queryValue);
+        setPlacesError(err instanceof Error ? err.message : "No s'han pogut carregar els restaurants.");
       } finally {
         if (!controller.signal.aborted) setLoadingPlaces(false);
       }
@@ -153,11 +102,7 @@ export function RestaurantPicker({ code }: { code?: string }) {
 
         setCategories(nextCategories);
         const visible = nextCategories.filter((category: VoteCategory) => category.visible);
-        setCategoryScores(
-          Object.fromEntries(
-            visible.map((category) => [category.key, Number(category.key === "qualitat" ? 8 : 7)]),
-          ),
-        );
+        setCategoryScores(Object.fromEntries(visible.map(category => [category.key, ""])));
       } catch {
         setCategories(DEFAULT_VOTE_CATEGORIES);
       }
@@ -166,45 +111,51 @@ export function RestaurantPicker({ code }: { code?: string }) {
     loadSession();
   }, [code]);
 
-  const filteredRestaurants = query.trim() ? restaurants : fallbackRestaurants;
+  const filteredRestaurants = query.trim() && resultQuery === query.trim() ? restaurants : fallbackRestaurants;
 
   const selectedRestaurant =
     filteredRestaurants.find((restaurant) => restaurant.id === selectedId) ??
     filteredRestaurants[0];
 
   const visibleCategories = categories.filter((category) => category.visible);
+  const categoryPayload = buildCategoryScores(categories, categoryScores);
+  const overallRating = averageCategoryScores(categoryPayload);
 
   const updateCategoryScore = (key: string, value: string) => {
-    const score = clampScore(value);
+    const score = value === "" ? "" : clampScore(value);
     setCategoryScores((current) => ({ ...current, [key]: score }));
   };
 
   const handleVote = async () => {
     if (!selectedRestaurant) return;
-    if (!code) {
-      setError("Falta el codi de la sessió.");
-      return;
-    }
+    if (overallRating === null) { setError("Puntua almenys una categoria per votar."); return; }
 
     setSaving(true);
     setError("");
     setSuccess("");
 
     try {
-      const finalRating = clampScore(overallRating);
-      const categoryPayload = Object.fromEntries(
-        visibleCategories.map((category) => [category.key, categoryScores[category.key] ?? finalRating]),
-      );
+      let voteCode = activeCode;
+      if (!voteCode) {
+        const created = await fetch("/api/sessions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: selectedRestaurant.name, location: selectedRestaurant.area, categories }),
+        });
+        const payload = await created.json();
+        if (!created.ok) throw new Error(payload.error ?? "No s’ha pogut crear la sessió.");
+        voteCode = String(payload.code);
+        setActiveCode(voteCode);
+      }
 
       const response = await fetch("/api/votes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          code,
+          code: voteCode,
           restaurantName: selectedRestaurant.name,
           restaurantArea: selectedRestaurant.area,
           restaurantType: selectedRestaurant.type,
-          rating: finalRating,
           categoryScores: categoryPayload,
         }),
       });
@@ -216,7 +167,7 @@ export function RestaurantPicker({ code }: { code?: string }) {
       }
 
       setSuccess("Vot guardat correctament.");
-      router.push(`/results?code=${encodeURIComponent(code)}`);
+      router.push(`/results?code=${encodeURIComponent(voteCode)}`);
     } catch (submitError) {
       setError(
         submitError instanceof Error
@@ -259,6 +210,7 @@ export function RestaurantPicker({ code }: { code?: string }) {
         </label>
 
         <div className="mt-5 space-y-3">
+          {placesError && query.trim() && <p role="alert" className="text-sm text-red-700">{placesError}</p>}
           {!loadingPlaces && filteredRestaurants.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
               No s’han trobat restaurants per aquesta cerca.
@@ -331,7 +283,7 @@ export function RestaurantPicker({ code }: { code?: string }) {
                 </dd>
               </div>
               <div>
-                <dt className="font-medium text-slate-500">Valoració global</dt>
+                <dt className="font-medium text-slate-500">Valoració de Google</dt>
                 <dd className="mt-1 text-base font-semibold text-slate-800">
                   {selectedRestaurant.rating.toFixed(1)} / 10
                 </dd>
@@ -339,18 +291,9 @@ export function RestaurantPicker({ code }: { code?: string }) {
             </dl>
 
             <div className="mt-5 rounded-2xl border border-orange-200 bg-white p-3">
-              <label className="block text-sm font-medium text-slate-700">
-                Puntuar restaurant (0–10)
-              </label>
-              <input
-                type="number"
-                min="0"
-                max="10"
-                step="0.5"
-                value={overallRating}
-                onChange={(event) => setOverallRating(clampScore(event.target.value))}
-                className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-slate-900 outline-none focus:border-orange-400"
-              />
+              <p className="text-sm font-medium text-slate-700">La teva puntuació</p>
+              <output aria-live="polite" className="mt-2 block text-2xl font-bold text-orange-700">{overallRating === null ? "Encara sense nota" : `${overallRating.toFixed(1)} / 10`}</output>
+              <p className="mt-2 text-xs text-slate-500">Mitjana de les categories que has puntuat. Les categories buides no compten.</p>
             </div>
 
             <div className="mt-5 space-y-3">
@@ -360,19 +303,20 @@ export function RestaurantPicker({ code }: { code?: string }) {
                 visibleCategories.map((category) => (
                   <div key={category.key} className="rounded-xl border border-slate-200 bg-white p-3">
                     <div className="mb-2 flex items-center justify-between gap-3">
-                      <span className="text-sm font-medium text-slate-700">
+                      <label htmlFor={`score-${category.key}`} className="text-sm font-medium text-slate-700">
                         {category.label}
-                      </span>
+                      </label>
                       <span className="text-xs text-slate-500">
-                        {categoryScores[category.key] ?? overallRating.toFixed(1)}/10
+                        {categoryScores[category.key] === "" || categoryScores[category.key] === undefined ? "Sense puntuar" : `${categoryScores[category.key]}/10`}
                       </span>
                     </div>
                     <input
+                      id={`score-${category.key}`}
                       type="number"
                       min="0"
                       max="10"
                       step="0.5"
-                      value={categoryScores[category.key] ?? overallRating}
+                      value={categoryScores[category.key] ?? ""}
                       onChange={(event) =>
                         updateCategoryScore(category.key, event.target.value)
                       }
@@ -405,7 +349,7 @@ export function RestaurantPicker({ code }: { code?: string }) {
               disabled={saving}
               className="mt-6 w-full rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-70"
             >
-              {saving ? "Guardant vot..." : "Guardar vot"}
+              {saving ? "Guardant…" : activeCode ? "Guardar vot" : "Crear sessió i votar"}
             </button>
           </>
         ) : (

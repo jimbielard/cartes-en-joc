@@ -6,7 +6,7 @@ import { RestaurantPicker } from "@/components/restaurant-picker";
 export default async function RestaurantsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ code?: string }>;
+  searchParams: Promise<{ code?: string; q?: string }>;
 }) {
   const session = await auth();
   const params = await searchParams;
@@ -34,7 +34,7 @@ export default async function RestaurantsPage({
                 href="/session"
                 className="inline-flex items-center justify-center rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
               >
-                Sessió
+                Crear sessió
               </Link>
               <Link
                 href="/"
@@ -46,11 +46,11 @@ export default async function RestaurantsPage({
           </div>
         </header>
 
-        <div className="mb-4 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">
+        {params.code && <div className="mb-4 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">
           Codi de la sessió: <span className="font-semibold text-slate-900">{params.code ?? "No disponible"}</span>
-        </div>
+        </div>}
 
-        <RestaurantPicker code={params.code} />
+        <RestaurantPicker key={`${params.code ?? ""}-${params.q ?? ""}`} code={params.code} initialQuery={params.q ?? ""} />
       </div>
     </main>
   );

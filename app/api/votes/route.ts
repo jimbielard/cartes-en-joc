@@ -3,19 +3,10 @@ import { prisma } from "@/lib/prisma";
 import {
   DEFAULT_VOTE_CATEGORIES,
   buildCategoryScores,
+  averageCategoryScores,
   normalizeCategories,
 } from "@/lib/vote-categories";
 import { NextResponse } from "next/server";
-
-function clampScore(value: number | string | null | undefined) {
-  const numeric = Number(value);
-
-  if (!Number.isFinite(numeric)) {
-    return null;
-  }
-
-  return Math.min(10, Math.max(0, numeric));
-}
 
 export async function POST(request: Request) {
   const session = await auth();
@@ -32,7 +23,6 @@ export async function POST(request: Request) {
   const restaurantName = String(body?.restaurantName ?? "").trim();
   const restaurantArea = String(body?.restaurantArea ?? "").trim();
   const restaurantType = String(body?.restaurantType ?? "").trim();
-  const rating = clampScore(body?.rating ?? 0);
 
   if (!code || !restaurantName) {
     return NextResponse.json({ error: "Missing required vote fields" }, { status: 400 });
@@ -56,6 +46,9 @@ export async function POST(request: Request) {
       ? body.categoryScores
       : {},
   );
+
+  const rating = averageCategoryScores(categoryScores);
+  if (rating === null) return NextResponse.json({ error: "Puntua almenys una categoria per votar." }, { status: 400 });
 
   const [, vote] = await prisma.$transaction([
     prisma.participant.upsert({

@@ -108,6 +108,18 @@ npx prisma studio
 
 ## Flux de l’app
 
+La portada inclou una cerca de restaurants i les 12 valoracions més recents de
+tota la comunitat. El perfil permet editar nom, àlies i biografia, i consultar
+l'historial personal paginat. El correu continua vinculat a Google.
+
+Des del cercador es pot crear una sessió i votar el restaurant seleccionat.
+La nota es calcula al servidor com la mitjana de les categories puntuades:
+el zero compta, les categories buides o ocultes no. Cal puntuar-ne almenys una.
+Les notes antigues es mostren a partir de les categories desades, quan n'hi ha.
+
+Amb el servidor local iniciat, `node scripts/verify-flows.mjs` verifica el flux
+amb dos comptes temporals i elimina les dades de prova en acabar.
+
 1. Login amb Google
 2. Crear una sessió
 3. Compartir codi

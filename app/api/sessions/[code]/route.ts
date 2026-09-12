@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { DEFAULT_VOTE_CATEGORIES, normalizeCategories } from "@/lib/vote-categories";
+import { DEFAULT_VOTE_CATEGORIES, normalizeCategories, averageCategoryScores } from "@/lib/vote-categories";
 import { NextResponse } from "next/server";
 
 export async function POST(
@@ -81,7 +81,7 @@ export async function GET(
     participants: restaurantSession.participants,
     votes: restaurantSession.votes.map((vote) => ({
       ...vote,
-      rating: vote.rating ?? null,
+      rating: averageCategoryScores(vote.categoryScores),
       categoryScores: vote.categoryScores ?? {},
     })),
   });
