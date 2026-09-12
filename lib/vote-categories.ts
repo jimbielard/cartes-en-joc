@@ -11,13 +11,14 @@ export function averageCategoryScores(input: unknown): number | null {
 }
 
 export const DEFAULT_VOTE_CATEGORIES: VoteCategory[] = [
-  { key: "qualitat", label: "Qualitat", visible: true },
-  { key: "servei", label: "Servei", visible: true },
-  { key: "ambient", label: "Ambient", visible: true },
-  { key: "preu", label: "Preu", visible: true },
-  { key: "originalitat", label: "Originalitat", visible: true },
-  { key: "neteja", label: "Neteja", visible: true },
-  { key: "localitzacio", label: "Localització", visible: true },
+  { key: "espai", label: "ESPAI", visible: true },
+  { key: "neteja", label: "NETEJA", visible: true },
+  { key: "entorn", label: "ENTORN", visible: true },
+  { key: "menjar", label: "MENJAR", visible: true },
+  { key: "plat_estrella", label: "PLAT ESTRELLA", visible: true },
+  { key: "servei", label: "SERVEI", visible: true },
+  { key: "postres", label: "POSTRES", visible: true },
+  { key: "preu", label: "PREU", visible: true },
 ];
 
 export function normalizeCategories(input: unknown): VoteCategory[] {
@@ -26,8 +27,6 @@ export function normalizeCategories(input: unknown): VoteCategory[] {
   if (!Array.isArray(input) || input.length === 0) {
     return fallback;
   }
-
-  const map = new Map(DEFAULT_VOTE_CATEGORIES.map((item) => [item.key, item]));
 
   return fallback.map((defaultItem) => {
     const found = input.find((entry) => {
@@ -42,7 +41,7 @@ export function normalizeCategories(input: unknown): VoteCategory[] {
 
     const candidate = found as Record<string, unknown>;
     const key = String(candidate.key ?? defaultItem.key);
-    const label = String(candidate.label ?? map.get(key)?.label ?? defaultItem.label);
+    const label = defaultItem.label;
     const visible = candidate.visible === undefined ? defaultItem.visible : Boolean(candidate.visible);
 
     return {

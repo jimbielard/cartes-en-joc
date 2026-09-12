@@ -31,7 +31,7 @@ async function call(path, cookie, method = 'GET', body) {
   assert.equal(created.status, 200);
   const { code } = await created.json();
   const restaurantName = `Verification restaurant ${randomUUID()}`;
-  const voted = await call('/api/votes', a.cookie, 'POST', { code, restaurantName, rating: 10, categoryScores: { qualitat: 0, ambient: 8, servei: 10 } });
+  const voted = await call('/api/votes', a.cookie, 'POST', { code, restaurantName, rating: 10, categoryScores: { espai: 0, menjar: 8, servei: 10 } });
   assert.equal(voted.status, 200);
   assert.equal((await voted.json()).vote.rating, 4);
   assert.equal((await call('/api/votes', a.cookie, 'POST', { code, restaurantName, rating: 10, categoryScores: {} })).status, 400);
