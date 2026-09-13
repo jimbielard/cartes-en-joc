@@ -2,13 +2,17 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { SessionSetup } from "@/components/session-setup";
+import { prisma } from "@/lib/prisma";
+import { toPlaceRestaurant } from "@/lib/restaurants";
 
-export default async function SessionPage() {
+export default async function SessionPage({ searchParams }: { searchParams: Promise<{ restaurant?: string; q?: string }> }) {
   const session = await auth();
 
   if (!session?.user) {
     redirect("/login");
   }
+  const params = await searchParams;
+  const restaurant = params.restaurant ? await prisma.restaurant.findUnique({ where: { id: params.restaurant.replace(/^local-/, "") } }) : null;
 
   return (
     <main className="min-h-screen bg-slate-50 p-6">
@@ -33,7 +37,7 @@ export default async function SessionPage() {
           </div>
         </header>
 
-        <SessionSetup />
+        <SessionSetup initialRestaurant={restaurant ? toPlaceRestaurant(restaurant) : null} initialQuery={params.q ?? ""} />
       </div>
     </main>
   );

@@ -1,4 +1,5 @@
 import { signIn } from "@/auth";
+import Link from "next/link";
 
 export default function LoginPage() {
   return (
@@ -33,6 +34,7 @@ export default function LoginPage() {
           </button>
         </form>
 
+        <Link href="/" className="mt-5 block text-center text-sm font-semibold text-slate-700 underline">Continuar com a convidat</Link>
         <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
           <p className="font-medium text-slate-800">Com funciona</p>
           <p className="mt-2 leading-6">Crea una sessió, comparteix el codi, vota i descobreix quin restaurant guanya.</p>

@@ -1,4 +1,4 @@
-import { auth } from "@/auth";
+import { attachSummaries } from "@/lib/restaurant-store";
 import { prisma } from "@/lib/prisma";
 import { normalizeRestaurantText, toPlaceRestaurant } from "@/lib/restaurants";
 
@@ -31,9 +31,6 @@ function normalizePriceLevel(level?: string) {
 }
 
 export async function GET(request: Request) {
-  if (!(await auth())?.user?.id) {
-    return NextResponse.json({ error: "No auth" }, { status: 401 });
-  }
   const { searchParams } = new URL(request.url);
   const query = (searchParams.get("query") ?? "restaurants").trim().slice(0, 200);
 
@@ -41,10 +38,10 @@ export async function GET(request: Request) {
     return NextResponse.json({ restaurants: [] });
   }
 
-  const localRestaurants = (await prisma.restaurant.findMany({
+  const localRestaurants = await attachSummaries((await prisma.restaurant.findMany({
     where: { AND: normalizeRestaurantText(query).split(" ").filter(Boolean).map(word => ({ searchText: { contains: word } })) },
     orderBy: { createdAt: "desc" }, take: 20,
-  })).map(toPlaceRestaurant);
+  })).map(toPlaceRestaurant));
 
   if (!GOOGLE_PLACES_API_KEY) {
     return NextResponse.json(
@@ -132,7 +129,7 @@ export async function GET(request: Request) {
       };
     });
 
-    return NextResponse.json({ restaurants: [...localRestaurants, ...restaurants] });
+    return NextResponse.json({ restaurants: await attachSummaries([...localRestaurants, ...restaurants]) });
   } catch {
     return NextResponse.json(
       {

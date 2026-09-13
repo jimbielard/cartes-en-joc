@@ -1,19 +1,13 @@
 import Link from "next/link";
-import { auth } from "@/auth";
-import { redirect } from "next/navigation";
 import { RestaurantPicker } from "@/components/restaurant-picker";
 
 export default async function RestaurantsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ code?: string; q?: string }>;
+  searchParams: Promise<{ code?: string; q?: string; id?: string }>;
 }) {
-  const session = await auth();
   const params = await searchParams;
 
-  if (!session?.user) {
-    redirect("/login");
-  }
 
   return (
     <main className="min-h-screen bg-slate-50 p-6">
@@ -50,7 +44,7 @@ export default async function RestaurantsPage({
           Codi de la sessió: <span className="font-semibold text-slate-900">{params.code ?? "No disponible"}</span>
         </div>}
 
-        <RestaurantPicker key={`${params.code ?? ""}-${params.q ?? ""}`} code={params.code} initialQuery={params.q ?? ""} />
+        <RestaurantPicker key={`${params.code ?? ""}-${params.q ?? ""}-${params.id ?? ""}`} code={params.code} initialQuery={params.q ?? ""} restaurantId={params.id} />
       </div>
     </main>
   );

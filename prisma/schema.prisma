@@ -36,6 +36,9 @@ model Restaurant {
   createdById String?
   createdBy   User?    @relation(fields: [createdById], references: [id], onDelete: SetNull)
   createdAt   DateTime @default(now())
+  googlePlaceId String? @unique
+  votes       Vote[]
+  sessions    RestaurantSession[]
 }
 
 model Account {
@@ -77,6 +80,8 @@ model RestaurantSession {
   updatedAt DateTime     @updatedAt
   participants Participant[]
   votes     Vote[]
+  restaurantId String?
+  restaurant Restaurant? @relation(fields: [restaurantId], references: [id], onDelete: Restrict)
 }
 
 model Participant {
@@ -84,27 +89,35 @@ model Participant {
   sessionId String
   name      String
   userId    String?
+  voterKey  String?
   session   RestaurantSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   user      User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
   createdAt DateTime          @default(now())
 
   @@unique([sessionId, userId])
+  @@unique([sessionId, voterKey])
 }
 
 model Vote {
   id              String            @id @default(cuid())
-  sessionId       String
-  userId          String
+  sessionId       String?
+  userId          String?
+  restaurantId    String?
+  voterKey        String
+  contextKey      String @default("direct")
   restaurantName  String
   restaurantArea  String?
   restaurantType  String?
   rating          Float?
   categoryScores  Json?
   createdAt       DateTime          @default(now())
-  session         RestaurantSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  session         RestaurantSession? @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  user            User?              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  restaurant      Restaurant?        @relation(fields: [restaurantId], references: [id], onDelete: Restrict)
 
   @@unique([sessionId, userId])
+  @@unique([restaurantId, voterKey, contextKey])
+  @@index([restaurantId])
 }
 
 model VerificationToken {

@@ -6,7 +6,6 @@ import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   const session = await auth();
-  if (!session?.user?.id) return NextResponse.json({ error: "Cal iniciar sessió." }, { status: 401 });
   const body = await request.json().catch(() => null);
   if (!body || typeof body.name !== "string" || typeof body.area !== "string" || typeof body.cuisine !== "string") {
     return NextResponse.json({ error: "Introdueix el nom, la ubicació i el tipus de cuina." }, { status: 400 });
@@ -21,7 +20,7 @@ export async function POST(request: Request) {
   try {
     const restaurant = await prisma.restaurant.upsert({
       where: { identityKey }, update: {},
-      create: { name, area, cuisine, identityKey, searchText: normalizeRestaurantText(`${name} ${area} ${cuisine}`), createdById: session.user.id },
+      create: { name, area, cuisine, identityKey, searchText: normalizeRestaurantText(`${name} ${area} ${cuisine}`), createdById: session?.user?.id ?? null },
     });
     return NextResponse.json({ restaurant: toPlaceRestaurant(restaurant) });
   } catch {

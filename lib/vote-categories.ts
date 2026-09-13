@@ -19,6 +19,7 @@ export const DEFAULT_VOTE_CATEGORIES: VoteCategory[] = [
   { key: "servei", label: "SERVEI", visible: true },
   { key: "postres", label: "POSTRES", visible: true },
   { key: "preu", label: "PREU", visible: true },
+  { key: "lavabos_wc", label: "LAVABOS / WC", visible: true },
 ];
 
 export function normalizeCategories(input: unknown): VoteCategory[] {

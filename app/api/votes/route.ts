@@ -1,86 +1,41 @@
-import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import {
-  DEFAULT_VOTE_CATEGORIES,
-  buildCategoryScores,
-  averageCategoryScores,
-  normalizeCategories,
-} from "@/lib/vote-categories";
+import { buildCategoryScores, averageCategoryScores, normalizeCategories } from "@/lib/vote-categories";
+import { getVoter } from "@/lib/voter";
+import { resolveRestaurant } from "@/lib/restaurant-store";
+import { getRestaurantSummary } from "@/lib/restaurant-summary";
+import { toPlaceRestaurant } from "@/lib/restaurants";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
-  const session = await auth();
-
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "No auth" }, { status: 401 });
-  }
-
   const body = await request.json().catch(() => null);
-  if (!body || typeof body !== "object" || Array.isArray(body)) {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  if (!body || typeof body !== "object" || Array.isArray(body)) return NextResponse.json({ error: "Petició no vàlida." }, { status: 400 });
+  const code = typeof body.code === "string" ? body.code.trim().toUpperCase() : "";
+  const target = code ? await prisma.restaurantSession.findUnique({ where: { code }, include: { restaurant: true } }) : null;
+  if (code && !target) return NextResponse.json({ error: "Sessió no trobada." }, { status: 404 });
+  if (target && !target.restaurant) return NextResponse.json({ error: "Aquesta sessió antiga no té un restaurant escollit. Crea una sessió nova." }, { status: 409 });
+  const categories = normalizeCategories(target?.categories);
+  const rawScores = body.categoryScores;
+  if (!rawScores || typeof rawScores !== "object" || Array.isArray(rawScores)) return NextResponse.json({ error: "Puntua almenys una categoria sobre 10." }, { status: 400 });
+  for (const category of categories.filter(c => c.visible)) {
+    const value = rawScores[category.key];
+    if (value !== undefined && value !== null && value !== "" && (typeof value !== "number" || !Number.isFinite(value) || value < 0 || value > 10)) return NextResponse.json({ error: "Les puntuacions han de ser números entre 0 i 10." }, { status: 400 });
   }
-  const code = String(body?.code ?? "").trim().toUpperCase();
-  const restaurantName = String(body?.restaurantName ?? "").trim();
-  const restaurantArea = String(body?.restaurantArea ?? "").trim();
-  const restaurantType = String(body?.restaurantType ?? "").trim();
-
-  if (!code || !restaurantName) {
-    return NextResponse.json({ error: "Missing required vote fields" }, { status: 400 });
-  }
-
-  const restaurantSession = await prisma.restaurantSession.findUnique({
-    where: { code },
-    include: { participants: true },
-  });
-
-  if (!restaurantSession) {
-    return NextResponse.json({ error: "Session not found" }, { status: 404 });
-  }
-
-  const sessionCategories = normalizeCategories(
-    restaurantSession.categories ?? DEFAULT_VOTE_CATEGORIES,
-  );
-  const categoryScores = buildCategoryScores(
-    sessionCategories,
-    (body?.categoryScores && typeof body.categoryScores === "object")
-      ? body.categoryScores
-      : {},
-  );
-
+  const categoryScores = buildCategoryScores(categories, rawScores);
   const rating = averageCategoryScores(categoryScores);
-  if (rating === null) return NextResponse.json({ error: "Puntua almenys una categoria per votar." }, { status: 400 });
-
-  const [, vote] = await prisma.$transaction([
-    prisma.participant.upsert({
-      where: { sessionId_userId: { sessionId: restaurantSession.id, userId: session.user.id } },
-      create: { sessionId: restaurantSession.id, userId: session.user.id, name: session.user.name ?? "Usuari" },
-      update: {},
-    }),
-    prisma.vote.upsert({
-    where: {
-      sessionId_userId: {
-        sessionId: restaurantSession.id,
-        userId: session.user.id,
-      },
-    },
-    update: {
-      restaurantName,
-      restaurantArea: restaurantArea || null,
-      restaurantType: restaurantType || null,
-      rating: rating ?? null,
-      categoryScores: Object.keys(categoryScores).length ? categoryScores : undefined,
-    },
-    create: {
-      sessionId: restaurantSession.id,
-      userId: session.user.id,
-      restaurantName,
-      restaurantArea: restaurantArea || null,
-      restaurantType: restaurantType || null,
-      rating: rating ?? null,
-      categoryScores: Object.keys(categoryScores).length ? categoryScores : undefined,
-    },
-    }),
-  ]);
-
-  return NextResponse.json({ ok: true, vote });
+  if (rating === null) return NextResponse.json({ error: "Puntua almenys una categoria sobre 10." }, { status: 400 });
+  const voter = (await getVoter())!;
+  let restaurant;
+  try { restaurant = target?.restaurant ?? await resolveRestaurant(body.restaurant, voter.userId); }
+  catch { return NextResponse.json({ error: "Escull un restaurant vàlid." }, { status: 400 }); }
+  const contextKey = target?.id ?? "direct";
+  const data = { restaurantName: restaurant.name, restaurantArea: restaurant.area, restaurantType: restaurant.cuisine, rating, categoryScores };
+  const vote = await prisma.$transaction(async tx => {
+    if (target) await tx.participant.upsert({ where: { sessionId_voterKey: { sessionId: target.id, voterKey: voter.key } }, create: { sessionId: target.id, userId: voter.userId, voterKey: voter.key, name: voter.name }, update: {} });
+    return tx.vote.upsert({
+      where: { restaurantId_voterKey_contextKey: { restaurantId: restaurant.id, voterKey: voter.key, contextKey } },
+      update: data,
+      create: { ...data, restaurantId: restaurant.id, userId: voter.userId, voterKey: voter.key, contextKey, sessionId: target?.id ?? null },
+    });
+  });
+  return NextResponse.json({ ok: true, vote: { id: vote.id, rating: vote.rating }, restaurant: { ...toPlaceRestaurant(restaurant), summary: await getRestaurantSummary(restaurant.id) } });
 }

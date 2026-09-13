@@ -108,8 +108,9 @@ npx prisma studio
 
 ## Flux de l’app
 
-La portada inclou una cerca de restaurants i les 12 valoracions més recents de
-tota la comunitat. El perfil permet editar nom, àlies i biografia, i consultar
+La portada pública inclou una cerca de restaurants i els 12 restaurants votats
+més recentment, amb nota general, total de vots i categories desplegables.
+El perfil permet editar nom, àlies i biografia, i consultar
 l'historial personal paginat. El correu continua vinculat a Google.
 
 Si el restaurant no apareix al cercador, es pot crear amb nom, adreça i tipus
@@ -118,16 +119,33 @@ Els duplicats amb el mateix nom i adreça reutilitzen el restaurant existent.
 Des de l'historial personal es poden eliminar les valoracions pròpies amb
 confirmació; això actualitza els resultats sense eliminar el restaurant compartit.
 
-Des del cercador es pot crear una sessió i votar el restaurant seleccionat.
+Es pot votar individualment, amb Google o com a convidat, sense crear una sessió.
+Cada sessió requereix un restaurant escollit: els participants que entren amb
+codi el veuen directament i només poden votar aquest restaurant.
+Crear sessions requereix Google; entrar-hi i votar no requereix registre.
+Els vots individuals i de sessió compten en el mateix total del restaurant.
+La nota general és la mitjana de les notes dels vots; cada nota de vot és la
+mitjana de les seves categories puntuades. Cada categoria mostra la seva pròpia
+mitjana i recompte. Actualitzar o eliminar una valoració recalcula els totals.
+Els convidats es reconeixen mitjançant una galeta HTTP-only del navegador.
+Un mateix vot individual o de sessió s'actualitza, en lloc de duplicar-se.
+
+Categories: ESPAI, NETEJA, ENTORN, MENJAR, PLAT ESTRELLA, SERVEI, POSTRES,
+PREU i LAVABOS / WC. El formulari indica explícitament «Vota sobre 10».
 La nota es calcula al servidor com la mitjana de les categories puntuades:
 el zero compta, les categories buides o ocultes no. Cal puntuar-ne almenys una.
 Les notes antigues es mostren a partir de les categories desades, quan n'hi ha.
 
 Amb el servidor local iniciat, `node scripts/verify-flows.mjs` verifica el flux
-amb dos comptes temporals i elimina les dades de prova en acabar.
+amb dos comptes temporals i convidats, i elimina les dades de prova en acabar.
+Després de la migració `20260913010000_restaurant_totals_guests`, executar
+`node scripts/backfill-restaurants.mjs` per vincular les valoracions antigues
+amb restaurants sense modificar les puntuacions. Les sessions antigues amb
+un únic restaurant es vinculen automàticament; les ambigües es conserven i
+requereixen crear una nova sessió per tornar a votar.
 
 1. Login amb Google
-2. Crear una sessió
+2. Escollir restaurant i crear una sessió
 3. Compartir codi
 4. Unir-se amb codi
 5. Votar restaurant

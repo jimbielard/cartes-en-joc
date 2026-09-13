@@ -5,10 +5,12 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { DEFAULT_VOTE_CATEGORIES } from "@/lib/vote-categories";
+import { RestaurantSearch } from "@/components/restaurant-search";
+import type { PlaceRestaurant } from "@/lib/restaurants";
 
 const starterParticipants: Array<{ id: number; name: string; isHost?: boolean }> = [];
 
-export function SessionSetup() {
+export function SessionSetup({ initialRestaurant = null, initialQuery = "" }: { initialRestaurant?: PlaceRestaurant | null; initialQuery?: string }) {
   const router = useRouter();
   const [sessionName, setSessionName] = useState("Sessió de restaurants");
   const [location, setLocation] = useState("Barcelona");
@@ -21,6 +23,7 @@ export function SessionSetup() {
   const [code, setCode] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [restaurant, setRestaurant] = useState<PlaceRestaurant | null>(initialRestaurant);
 
   const addParticipant = () => {
     const trimmed = newParticipant.trim();
@@ -44,6 +47,7 @@ export function SessionSetup() {
   };
 
   const handleCreateSession = async () => {
+    if (!restaurant) { setError("Escull el restaurant de la sessió."); return; }
     setSaving(true);
     setError("");
 
@@ -56,6 +60,7 @@ export function SessionSetup() {
           location,
           participants: participants.map((participant) => participant.name),
           categories,
+          restaurant,
         }),
       });
 
@@ -84,6 +89,9 @@ export function SessionSetup() {
   };
 
   return (
+    <div>
+      {!created && <div className="mb-6"><RestaurantSearch initialQuery={initialQuery} selectedId={restaurant?.id} onSelect={setRestaurant} /></div>}
+      {restaurant && <div className="mb-6 rounded-2xl border border-orange-200 bg-orange-50 p-5"><p className="font-semibold text-orange-900">Restaurant de la sessió: {restaurant.name}</p><p className="mt-1 text-sm text-orange-800">{restaurant.area}</p><p className="mt-2 text-sm text-orange-800">Tothom que entri amb el codi votarà aquest restaurant.</p></div>}
     <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
       <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="mb-6 flex items-center justify-between gap-4">
@@ -98,7 +106,7 @@ export function SessionSetup() {
           <button
             type="button"
             onClick={handleCreateSession}
-            disabled={saving}
+            disabled={saving || created || !restaurant}
             className="rounded-full bg-orange-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-70"
           >
             {saving ? "Creant..." : "Crear sessió"}
@@ -111,7 +119,7 @@ export function SessionSetup() {
           </div>
         ) : null}
 
-        <div className="space-y-5">
+        <fieldset disabled={saving || created} className="space-y-5">
           <label className="block">
             <span className="mb-2 block text-sm font-medium text-slate-700">
               Nom de la sessió
@@ -209,7 +217,7 @@ export function SessionSetup() {
               ))}
             </div>
           </div>
-        </div>
+        </fieldset>
       </section>
 
       <aside className="rounded-3xl border border-orange-100 bg-gradient-to-br from-orange-50 to-white p-6 shadow-sm">
@@ -255,6 +263,6 @@ export function SessionSetup() {
           ) : null}
         </div>
       </aside>
-    </div>
+    </div></div>
   );
 }

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { averageCategoryScores } from "@/lib/vote-categories";
 import { DeleteVoteButton } from "@/components/delete-vote-button";
+import { RestaurantLinks } from "@/components/restaurant-links";
 
 export type HistoryVote = {
   id: string;
@@ -23,6 +24,7 @@ export function VoteHistory({ votes, personal = false }: { votes: HistoryVote[];
             <Link href={`/restaurants?q=${encodeURIComponent(vote.restaurantName)}`} className="break-words text-lg font-semibold text-slate-900 underline-offset-4 hover:underline">{vote.restaurantName}</Link>
             <p className="mt-1 text-sm text-slate-600">{[vote.restaurantArea, vote.restaurantType].filter(Boolean).join(" · ")}</p>
             <time dateTime={vote.createdAt.toISOString()} className="mt-1 block text-xs text-slate-500">{new Intl.DateTimeFormat("ca", { dateStyle: "medium", timeZone: "Europe/Madrid" }).format(vote.createdAt)}</time>
+            <RestaurantLinks name={vote.restaurantName} area={vote.restaurantArea} />
             {personal && <DeleteVoteButton id={vote.id} name={vote.restaurantName} />}
           </div>
           <span className="shrink-0 font-bold text-orange-700">{averageCategoryScores(vote.categoryScores) === null ? "Sense nota" : `${averageCategoryScores(vote.categoryScores)!.toFixed(1)} / 10`}</span>
