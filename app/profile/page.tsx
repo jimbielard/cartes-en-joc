@@ -18,6 +18,10 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
   if (!user) redirect("/login");
   return <main className="min-h-screen bg-orange-50/50 p-4 sm:p-6"><div className="mx-auto max-w-4xl">
     <header className="flex flex-wrap items-center justify-between gap-4 py-4"><h1 className="text-3xl font-bold text-slate-900">El meu perfil</h1><Link href="/" className="rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-semibold">Tornar a l’inici</Link></header>
+    <nav aria-label="Menú del perfil" className="mt-4 flex flex-wrap gap-3">
+      <Link href="/profile" aria-current="page" className="rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white">Les meves dades i votacions</Link>
+      <Link href="/profile/config" className="rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">Configuració</Link>
+    </nav>
     <ProfileForm user={user} />
     <VoteHistory votes={votes.slice(0, 20)} personal />
     <nav aria-label="Pàgines de l’historial" className="mt-5 flex justify-between gap-4">
