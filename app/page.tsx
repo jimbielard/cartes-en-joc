@@ -11,15 +11,15 @@ export default async function HomePage() {
   const recent = await prisma.vote.findMany({ where: { restaurantId: { not: null } }, orderBy: [{ createdAt: "desc" }, { id: "desc" }], distinct: ["restaurantId"], take: 12, include: { restaurant: true } });
   const restaurants = await attachSummaries(recent.flatMap(vote => vote.restaurant ? [toPlaceRestaurant(vote.restaurant)] : []));
   return <main className="min-h-screen bg-[radial-gradient(circle_at_top,_#fff7ed_0%,_#ffe4e6_35%,_#fffaf5_100%)] p-4 text-slate-800 sm:p-6"><div className="mx-auto max-w-6xl">
-    <header className="mb-6 rounded-3xl border border-pink-200 bg-white p-6">
+    <header className="mb-6 rounded-3xl border border-pink-200 bg-white p-4 sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-5">
-        <div><Link href="/" className="font-bold text-pink-700">Cartes en Joc</Link><h1 className="mt-3 text-3xl font-bold text-slate-900">{session?.user ? `Hola, ${session.user.name ?? "usuari"}` : "Descobreix i valora restaurants"}</h1></div>
+        <div><Link href="/" className="font-bold text-pink-700">Cartes en Joc</Link><h1 className="mt-3 text-2xl sm:text-3xl font-bold text-slate-900">{session?.user ? `Hola, ${session.user.name ?? "usuari"}` : "Descobreix i valora restaurants"}</h1></div>
         <div className="flex flex-wrap items-center gap-3">
           <span className="text-sm text-emerald-800">{session?.user ? "Connectat" : "Convidat"}</span>
           {session?.user ? <><Link href="/profile" className="rounded-full border border-slate-200 px-4 py-3 text-sm font-semibold">El meu perfil</Link><form action={async () => { "use server"; await signOut({ redirectTo: "/" }); }}><button className="rounded-full border border-pink-200 px-4 py-3 text-sm font-semibold text-pink-800">Tancar sessió</button></form></> : <Link href="/login" className="rounded-full bg-slate-900 px-4 py-3 text-sm font-semibold text-white">Iniciar sessió amb Google</Link>}
         </div>
       </div>
-      <nav aria-label="Sessions" className="mt-5 flex flex-wrap gap-3"><Link href="/session" className="rounded-full bg-orange-600 px-5 py-3 text-sm font-semibold text-white">Crear sessió</Link><Link href="/join" className="rounded-full border border-slate-200 px-5 py-3 text-sm font-semibold">Entrar amb codi</Link></nav>
+      <nav aria-label="Sessions" className="mt-5 grid grid-cols-1 gap-3 min-[380px]:grid-cols-2 sm:flex sm:flex-wrap"><Link href="/session" className="rounded-full bg-orange-600 px-5 py-3 text-sm font-semibold text-white">Crear sessió</Link><Link href="/join" className="rounded-full border border-slate-200 px-5 py-3 text-sm font-semibold">Entrar amb codi</Link></nav>
     </header>
     <RestaurantPicker />
     <section className="mt-8 rounded-3xl border border-orange-100 bg-white p-5 sm:p-6"><h2 className="text-2xl font-bold text-slate-900">Últims restaurants votats</h2><p className="mt-2 text-sm text-slate-600">La puntuació general inclou totes les valoracions de l’app.</p>

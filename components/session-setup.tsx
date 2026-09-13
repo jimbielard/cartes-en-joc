@@ -93,8 +93,8 @@ export function SessionSetup({ initialRestaurant = null, initialQuery = "" }: { 
       {!created && <div className="mb-6"><RestaurantSearch initialQuery={initialQuery} selectedId={restaurant?.id} onSelect={setRestaurant} /></div>}
       {restaurant && <div className="mb-6 rounded-2xl border border-orange-200 bg-orange-50 p-5"><p className="font-semibold text-orange-900">Restaurant de la sessió: {restaurant.name}</p><p className="mt-1 text-sm text-orange-800">{restaurant.area}</p><p className="mt-2 text-sm text-orange-800">Tothom que entri amb el codi votarà aquest restaurant.</p></div>}
     <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-      <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="mb-6 flex items-center justify-between gap-4">
+      <section className="rounded-3xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm">
+        <div className="mb-6 flex flex-col items-stretch justify-between gap-4 sm:flex-row sm:items-center">
           <div>
             <p className="text-sm font-medium uppercase tracking-[0.22em] text-orange-500">
               Nova sessió
@@ -156,7 +156,7 @@ export function SessionSetup({ initialRestaurant = null, initialQuery = "" }: { 
               {participants.map((participant) => (
                 <div
                   key={participant.id}
-                  className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-2"
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2"
                 >
                   <span className="text-sm font-medium text-slate-700">
                     {participant.name}
@@ -170,7 +170,7 @@ export function SessionSetup({ initialRestaurant = null, initialQuery = "" }: { 
               ))}
             </div>
 
-            <div className="mt-4 flex gap-2">
+            <div className="mt-4 flex flex-col gap-2 sm:flex-row">
               <input
                 value={newParticipant}
                 onChange={(event) => setNewParticipant(event.target.value)}
@@ -199,13 +199,13 @@ export function SessionSetup({ initialRestaurant = null, initialQuery = "" }: { 
               {categories.map((category) => (
                 <div
                   key={category.key}
-                  className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-2"
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2"
                 >
                   <span className="text-sm font-medium text-slate-700">
                     {category.label}
                   </span>
 
-                  <label className="inline-flex cursor-pointer items-center gap-2 text-xs font-medium text-slate-600">
+                  <label className="inline-flex min-h-11 shrink-0 cursor-pointer items-center gap-2 text-xs font-medium text-slate-600">
                     <input
                       type="checkbox"
                       checked={category.visible}
@@ -220,7 +220,7 @@ export function SessionSetup({ initialRestaurant = null, initialQuery = "" }: { 
         </fieldset>
       </section>
 
-      <aside className="rounded-3xl border border-orange-100 bg-gradient-to-br from-orange-50 to-white p-6 shadow-sm">
+      <aside className="rounded-3xl border border-orange-100 bg-gradient-to-br from-orange-50 to-white p-4 sm:p-6 shadow-sm">
         <p className="text-sm font-medium uppercase tracking-[0.22em] text-orange-500">
           Resum
         </p>
@@ -236,7 +236,7 @@ export function SessionSetup({ initialRestaurant = null, initialQuery = "" }: { 
 
           <div>
             <dt className="font-medium text-slate-500">Codi de la sessió</dt>
-            <dd className="mt-1 text-2xl font-black tracking-[0.18em] text-orange-600">
+            <dd className="mt-1 text-xl font-black tracking-[0.08em] sm:text-2xl sm:tracking-[0.12em] text-orange-600">
               {created ? code : "—"}
             </dd>
           </div>

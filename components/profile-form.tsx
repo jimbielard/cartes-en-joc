@@ -22,7 +22,7 @@ export function ProfileForm({ user }: { user: { name: string | null; alias: stri
     finally { setSaving(false); }
   }
   const inputClass = "mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100";
-  return <form onSubmit={save} className="mt-6 rounded-3xl border border-orange-100 bg-white p-6 sm:p-8">
+  return <form onSubmit={save} className="mt-6 rounded-3xl border border-orange-100 bg-white p-4 sm:p-8">
     <h2 className="text-xl font-bold text-slate-900">Les meves dades</h2>
     <fieldset disabled={saving} className="mt-6 grid gap-5 sm:grid-cols-2">
       <label className="text-sm font-medium text-slate-700">Nom<input name="name" required maxLength={80} autoComplete="name" defaultValue={user.name ?? ""} className={inputClass} /></label>

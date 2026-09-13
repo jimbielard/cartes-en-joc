@@ -116,7 +116,7 @@ export function ResultsPanel({ code }: { code: string }) {
 
   return (
     <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-      <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+      <section className="rounded-3xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm">
         <p className="text-sm font-medium uppercase tracking-[0.22em] text-orange-500">
           Resultats
         </p>
@@ -142,7 +142,7 @@ export function ResultsPanel({ code }: { code: string }) {
             standings.map((item, index) => (
               <div
                 key={item.name}
-                className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
+                className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
               >
                 <div>
                   <p className="text-sm font-semibold text-slate-800">
@@ -167,7 +167,7 @@ export function ResultsPanel({ code }: { code: string }) {
         </div>
       </section>
 
-      <aside className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+      <aside className="rounded-3xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm">
         <p className="text-sm font-medium uppercase tracking-[0.22em] text-orange-500">
           Participants
         </p>
@@ -176,7 +176,7 @@ export function ResultsPanel({ code }: { code: string }) {
             session.participants.map((participant) => (
               <div
                 key={participant.id}
-                className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2"
+                className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2"
               >
                 <span className="text-sm font-medium text-slate-700">
                   {participant.name}

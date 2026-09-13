@@ -38,7 +38,7 @@ export function RestaurantPicker({ code, initialQuery = "", restaurantId }: { co
   return <div className={code ? "mx-auto max-w-3xl" : "grid items-start gap-6 lg:grid-cols-2"}>
     {!code && <RestaurantSearch initialQuery={initialQuery} selectedId={selected?.id} refreshKey={refreshKey} updatedRestaurant={selected ?? undefined} onSelect={restaurant => {
       setSelected(restaurant); setSelectionKey(restaurant.id); setError("");
-      requestAnimationFrame(() => document.getElementById("restaurant-vote")?.scrollIntoView({ behavior: "smooth", block: "start" }));
+      requestAnimationFrame(() => document.getElementById("restaurant-vote")?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth", block: "start" }));
     }} />}
     {selected ? <VoteForm key={selectionKey} restaurant={selected} categories={categories} code={code} onSaved={restaurant => { setSelected(restaurant); setRefreshKey(key => key + 1); router.refresh(); }} /> : <div className="rounded-3xl border border-dashed border-slate-300 p-8 text-slate-600"><h2 className="text-xl font-semibold text-slate-900">Valoracions de tota la comunitat</h2><p className="mt-3">Cerca un restaurant per veure’n la nota general, el nombre total de vots i el detall per categories. Selecciona’l per votar sobre 10.</p>{error && <p role="alert" className="mt-3 text-red-700">{error}</p>}</div>}
   </div>;

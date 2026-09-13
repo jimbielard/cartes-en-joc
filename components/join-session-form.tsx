@@ -42,7 +42,7 @@ export function JoinSessionForm() {
   };
 
   return (
-    <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+    <div className="rounded-3xl border border-slate-200 bg-white p-4 sm:p-8 shadow-sm">
       <p className="text-sm font-medium uppercase tracking-[0.22em] text-orange-500">
         Entrar amb codi
       </p>

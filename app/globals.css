@@ -25,6 +25,46 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  overflow-wrap: anywhere;
+}
+
+/* Allow nested form and grid content to shrink on narrow screens. */
+main :where(section, aside, article, div, fieldset, label, input, textarea) {
+  min-width: 0;
+}
+
+input:not([type="checkbox"]):not([type="radio"]), textarea, select {
+  font-size: 1rem;
+  max-width: 100%;
+}
+
+button, summary, nav a, a[class*="rounded"] {
+  min-height: 44px;
+}
+
+nav a, a[class*="rounded"] {
+  align-content: center;
+}
+
+input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  accent-color: #ea580c;
+}
+
+#restaurant-vote { scroll-margin-top: 1rem; }
+
+.category-summary { container-type: inline-size; }
+.category-summary dl { grid-template-columns: minmax(0, 1fr); }
+@container (min-width: 420px) {
+  .category-summary dl { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  button, a { transition: none; }
 }
 
 button,

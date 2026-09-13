@@ -21,7 +21,7 @@ export default async function ProfileConfigPage() {
       <Link href="/profile" className="rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">Les meves dades i votacions</Link>
       <Link href="/profile/config" aria-current="page" className="rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white">Configuració</Link>
     </nav>
-    <section className="mt-6 rounded-3xl border border-orange-100 bg-white p-6 sm:p-8">
+    <section className="mt-6 rounded-3xl border border-orange-100 bg-white p-4 sm:p-8">
       <h2 className="text-2xl font-bold text-slate-900">Disseny de l’aplicació</h2>
       <p className="mt-2 text-sm leading-6 text-slate-600">Explora les quatre propostes abans d’escollir. Són previsualitzacions: obrir-les no canvia el disseny actual.</p>
       <ul className="mt-6 divide-y divide-slate-200">
