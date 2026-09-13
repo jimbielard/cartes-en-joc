@@ -72,6 +72,7 @@ export function SessionSetup({ initialRestaurant = null, initialQuery = "" }: { 
 
       setCode(payload.code);
       setCreated(true);
+      router.push(`/restaurants?code=${encodeURIComponent(payload.code)}`);
     } catch (submitError) {
       setError(
         submitError instanceof Error
@@ -90,14 +91,14 @@ export function SessionSetup({ initialRestaurant = null, initialQuery = "" }: { 
 
   return (
     <div>
-      {!created && <div className="mb-6"><RestaurantSearch initialQuery={initialQuery} selectedId={restaurant?.id} onSelect={setRestaurant} /></div>}
+      {!created && !restaurant && <div className="mb-6"><RestaurantSearch initialQuery={initialQuery} onSelect={setRestaurant} /></div>}
       {restaurant && <div className="mb-6 rounded-2xl border border-orange-200 bg-orange-50 p-5"><p className="font-semibold text-orange-900">Restaurant de la sessió: {restaurant.name}</p><p className="mt-1 text-sm text-orange-800">{restaurant.area}</p><p className="mt-2 text-sm text-orange-800">Tothom que entri amb el codi votarà aquest restaurant.</p></div>}
     <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
       <section className="rounded-3xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm">
         <div className="mb-6 flex flex-col items-stretch justify-between gap-4 sm:flex-row sm:items-center">
           <div>
             <p className="text-sm font-medium uppercase tracking-[0.22em] text-orange-500">
-              Nova sessió
+              Nova partida
             </p>
             <h2 className="mt-2 text-2xl font-bold text-slate-900">
               Configura la partida
@@ -109,7 +110,7 @@ export function SessionSetup({ initialRestaurant = null, initialQuery = "" }: { 
             disabled={saving || created || !restaurant}
             className="rounded-full bg-orange-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-70"
           >
-            {saving ? "Creant..." : "Crear sessió"}
+            {saving ? "Creant..." : "Crear partida"}
           </button>
         </div>
 

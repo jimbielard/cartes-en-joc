@@ -10,7 +10,7 @@ export default async function RestaurantsPage({
 
 
   return (
-    <main className="min-h-screen bg-slate-50 p-6">
+    <main className="min-h-screen bg-slate-50 p-4 sm:p-6">
       <div className="mx-auto max-w-6xl">
         <header className="mb-8 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -23,13 +23,8 @@ export default async function RestaurantsPage({
               </h1>
             </div>
 
-            <div className="flex gap-3">
-              <Link
-                href="/session"
-                className="inline-flex items-center justify-center rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
-              >
-                Crear sessió
-              </Link>
+            <div className="flex flex-wrap gap-3">
+
               <Link
                 href="/"
                 className="inline-flex items-center justify-center rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"

@@ -4,9 +4,9 @@ import { useRouter } from "next/navigation";
 
 import { useState } from "react";
 
-export function JoinSessionForm() {
+export function JoinSessionForm({ initialCode = "" }: { initialCode?: string }) {
   const router = useRouter();
-  const [code, setCode] = useState("");
+  const [code, setCode] = useState(initialCode);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -57,6 +57,9 @@ export function JoinSessionForm() {
           </span>
           <input
             value={code}
+            autoCapitalize="characters"
+            autoCorrect="off"
+            spellCheck={false}
             onChange={(event) => setCode(event.target.value)}
             placeholder="JDC-ABCD"
             className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-orange-400 focus:bg-white"

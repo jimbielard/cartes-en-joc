@@ -56,6 +56,14 @@ input[type="checkbox"] {
 
 #restaurant-vote { scroll-margin-top: 1rem; }
 
+.home-account > a, .home-account > form, .home-account > form > button {
+  width: 100%;
+  text-align: center;
+}
+@media (min-width: 640px) {
+  .home-account > a, .home-account > form, .home-account > form > button { width: auto; }
+}
+
 .category-summary { container-type: inline-size; }
 .category-summary dl { grid-template-columns: minmax(0, 1fr); }
 @container (min-width: 420px) {

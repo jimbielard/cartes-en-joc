@@ -6,12 +6,12 @@ import { prisma } from "@/lib/prisma";
 import { toPlaceRestaurant } from "@/lib/restaurants";
 
 export default async function SessionPage({ searchParams }: { searchParams: Promise<{ restaurant?: string; q?: string }> }) {
+  const params = await searchParams;
   const session = await auth();
 
   if (!session?.user) {
-    redirect("/login");
+    redirect(`/login?restaurant=${encodeURIComponent(params.restaurant ?? "")}`);
   }
-  const params = await searchParams;
   const restaurant = params.restaurant ? await prisma.restaurant.findUnique({ where: { id: params.restaurant.replace(/^local-/, "") } }) : null;
 
   return (

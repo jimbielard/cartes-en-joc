@@ -1,7 +1,9 @@
 import { signIn } from "@/auth";
 import Link from "next/link";
 
-export default function LoginPage() {
+export default async function LoginPage({ searchParams }: { searchParams: Promise<{ restaurant?: string }> }) {
+  const params = await searchParams;
+  const redirectTo = params.restaurant ? `/session?restaurant=${encodeURIComponent(params.restaurant)}` : "/";
   return (
     <main className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top,_#fff7ed,_#ffffff_40%,_#f8fafc_100%)] p-6">
       <div className="w-full max-w-lg rounded-[32px] border border-orange-100 bg-white p-8 shadow-[0_30px_80px_rgba(249,115,22,0.12)]">
@@ -21,7 +23,7 @@ export default function LoginPage() {
         <form
           action={async () => {
             "use server";
-            await signIn("google", { redirectTo: "/" });
+            await signIn("google", { redirectTo });
           }}
           className="space-y-4"
         >

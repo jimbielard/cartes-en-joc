@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { ShareGame } from "@/components/share-game";
 import type { PlaceRestaurant } from "@/lib/restaurants";
 import { averageCategoryScores, buildCategoryScores, type VoteCategory } from "@/lib/vote-categories";
 import { RestaurantSummary } from "@/components/restaurant-summary";
@@ -26,6 +27,7 @@ export function VoteForm({ restaurant, categories, code, onSaved }: { restaurant
     finally { setSaving(false); }
   }
   return <section id="restaurant-vote" className="rounded-3xl border border-orange-200 bg-white p-5 sm:p-6">
+    {code && <ShareGame code={code} />}
     <h2 className="text-2xl font-bold text-slate-900">{restaurant.name}</h2><p className="mt-2 text-sm text-slate-600">{restaurant.area}</p>
     {code && <p className="mt-3 rounded-xl bg-orange-50 p-3 text-sm text-orange-900">Restaurant escollit per a la sessió {code}. Tots els participants voten aquest restaurant.</p>}
     <RestaurantSummary summary={restaurant.summary} restaurant={restaurant} />
@@ -38,6 +40,6 @@ export function VoteForm({ restaurant, categories, code, onSaved }: { restaurant
       <button disabled={saving} className="mt-4 w-full rounded-xl bg-slate-900 px-5 py-3 font-semibold text-white disabled:opacity-60">{saving ? "Desant…" : "Desar valoració"}</button>
       <p className="mt-3 text-xs text-slate-500">Pots votar sense registre. Si votes com a convidat, aquest navegador recordarà la teva valoració.</p>
     </form>
-    {code ? <Link href={`/results?code=${encodeURIComponent(code)}`} className="mt-4 inline-block text-sm font-semibold underline">Veure els resultats de la sessió</Link> : <Link href={restaurant.id.startsWith("local-") ? `/session?restaurant=${encodeURIComponent(restaurant.id)}` : `/session?q=${encodeURIComponent(restaurant.name)}`} className="mt-4 inline-block text-sm font-semibold underline">Crear una sessió amb aquest restaurant</Link>}
+    {code ? <Link href={`/results?code=${encodeURIComponent(code)}`} className="mt-4 inline-block text-sm font-semibold underline">Veure els resultats de la sessió</Link> : null}
   </section>;
 }

@@ -3,10 +3,15 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { normalizeRestaurantText, toPlaceRestaurant } from "@/lib/restaurants";
 import { NextResponse } from "next/server";
+import { resolveRestaurant } from "@/lib/restaurant-store";
 
 export async function POST(request: Request) {
   const session = await auth();
   const body = await request.json().catch(() => null);
+  if (body?.restaurant) {
+    try { return NextResponse.json({ restaurant: toPlaceRestaurant(await resolveRestaurant(body.restaurant, session?.user?.id ?? null)) }); }
+    catch { return NextResponse.json({ error: "No s’ha pogut preparar el restaurant escollit." }, { status: 400 }); }
+  }
   if (!body || typeof body.name !== "string" || typeof body.area !== "string" || typeof body.cuisine !== "string") {
     return NextResponse.json({ error: "Introdueix el nom, la ubicació i el tipus de cuina." }, { status: 400 });
   }
